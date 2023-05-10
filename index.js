@@ -1,7 +1,6 @@
 import * as readline from 'node:readline';
+// import chalk from 'chalk'; // TODO: chalk
 import process from 'node:process';
-
-let State = initialState();
 
 function merge(obj1, obj2) {
   // Given obj1 and obj2, return a copy of obj1 overriden by obj2's fields.
@@ -14,8 +13,14 @@ function replaceAtIndex(s, idx, r) {
   return s.substring(0, idx) + r + s.substring(idx + r.length);
 }
 
-function isCollision(pos) {
-  return State.floor[pos.y][pos.x] !== '.';
+function isCollision(state, pos) {
+  return state.floor[pos.y][pos.x] !== '.';
+}
+
+function isGold(state, pos) {
+  // Objects with the same fields and the same values aren't "equal" in JS, either with strict or loose equality (==/===)
+  // To work around this, I convert our objects to a JSON string and check if those are equal.
+  return JSON.stringify(pos) === JSON.stringify(state.gold_pos);
 }
 
 function buildFloor(size_w, size_h) {
@@ -35,47 +40,79 @@ function initialState() {
   return ({
     floor: buildFloor(18, 18),
     player_pos: { x: 1, y: 1 },
+    goblins_pos: [], // TODO: come back to these gobbos when we got gold!
+    gold_pos: {x: 8, y: 8},
+    gold_collected: 0,
   });
 }
 
-function handleAction(action) {
-  let player_final_position = { x: State.player_pos.x, y: State.player_pos.y };
+function handleAction(state, action) {
+  let player_final_position = { x: state.player_pos.x, y: state.player_pos.y };
   switch (action) {
     case 'up':    player_final_position.y--; break;
     case 'left':    player_final_position.x--; break;
     case 'down':  player_final_position.y++; break;
     case 'right': player_final_position.x++; break;
   }
-  State.player_pos = isCollision(player_final_position) ? State.player_pos : merge(State.player_pos, player_final_position);
-
-  show();
+  if (isCollision(state, player_final_position)) {
+    return state;
+  } else {
+    if (isGold(state, player_final_position)) {
+      return merge(state, { gold_collected: state.gold_collected+1, player_pos: player_final_position, gold_pos: { x: 1, y: 1 }}); // TODO: randomize pos
+    } else {
+      return merge(state, { player_pos: player_final_position });
+    }
+  }
 }
 
-function show() {
-  console.clear();
-  State.floor.forEach((row, idx) => {
-    if (idx == State.player_pos.y) {
-      console.log(`${row.slice(0, State.player_pos.x)}@${row.slice(State.player_pos.x+1, row.length)}`);
-    } else {
-      console.log(row);
-    }
+function goblinsRunTowardsPlayer(state) {
+  const goblins_new_pos = state.goblins_pos.map((pos) => {
+    if (state.player_pos.x < pos.x) return { x: pos.x-1, y: pos.y };
+    else if (state.player_pos.x > pos.x) return { x: pos.x+1, y: pos.y };
+    else if (state.player_pos.y < pos.y) return { x: pos.x, y: pos.y-1 };
+    else if (state.player_pos.y > pos.y) return { x: pos.x, y: pos.y+1 };
   });
-  console.log(State.player_pos);
+
+  return merge(state, { goblins_pos: goblins_new_pos });
+}
+
+function turn(state, player_input) {
+  state = handleAction(state, player_input); // TODO: invalid moves shouldn't skip turns, maybe add a callback on_valid_move?
+  state = goblinsRunTowardsPlayer(state);
+  show(state);
+  return state;
+}
+
+function show(state) {
+  console.clear();
+  state.floor.forEach((row, idx) => {
+    let row_buffer = row + '';
+    const goblins_on_this_row = state.goblins_pos.filter((pos) => pos.y == idx);
+    goblins_on_this_row.forEach((pos) => { row_buffer = replaceAtIndex(row_buffer, pos.x, 'g'); });
+    if (idx == state.gold_pos.y) row_buffer = replaceAtIndex(row_buffer, state.gold_pos.x, '$');
+    if (idx == state.player_pos.y) row_buffer = replaceAtIndex(row_buffer, state.player_pos.x, '@');
+    console.log(row_buffer);
+  });
+  console.log(state.player_pos);
+  console.log(`Gold: ${state.gold_collected}`);
 }
 
 function main() {
+  // Something here is blocking main from returning.
+  // I mean, like, good, I want that.  But I'm not sure /what/ it is lol.
+  let state = initialState();
   readline.emitKeypressEvents(process.stdin);
   process.stdin.setRawMode(true);
   process.stdin.on('keypress', (str, key) => {
     if (key.ctrl && key.name == 'c') process.exit();
     switch (key.name.toUpperCase()) {
-      case 'W': case 'K': case 'UP':    handleAction('up'); break
-      case 'A': case 'H': case 'LEFT':  handleAction('left'); break
-      case 'S': case 'J': case 'DOWN':  handleAction('down'); break
-      case 'D': case 'L': case 'RIGHT': handleAction('right'); break
+      case 'W': case 'K': case 'UP':    state = turn(state, 'up');  break;
+      case 'A': case 'H': case 'LEFT':  state = turn(state, 'left');  break;
+      case 'S': case 'J': case 'DOWN':  state = turn(state, 'down');  break;
+      case 'D': case 'L': case 'RIGHT': state = turn(state, 'right'); break;
     }
   });
-  show();
+  show(state);
 }
 
 main();

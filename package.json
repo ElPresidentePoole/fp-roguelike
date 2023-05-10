@@ -9,5 +9,8 @@
   },
   "author": "",
   "type": "module",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.2.0"
+  }
 }
