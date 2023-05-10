@@ -39,6 +39,7 @@ function buildFloor(size_w, size_h) {
 
 function randomFreePosition(state) {
   // TODO: make an Array of all possible x and y values, minus the ones occupied by the player (or gobbos!)
+  // FIXME: this modifies state, which is a big no-no!
   return { x: 1+Math.floor(randomFloat(state.rngi++) * (state.floor[0].length-2)), y: 1+Math.floor(randomFloat(state.rngi++) * (state.floor.length-2)) };
 }
 
