@@ -10,12 +10,25 @@ function merge(obj1, obj2) {
   return Object.assign({}, obj1, obj2);
 }
 
+function replaceAtIndex(s, idx, r) {
+  return s.substring(0, idx) + r + s.substring(idx + r.length);
+}
+
 function isCollision(pos) {
   return State.floor[pos.y][pos.x] !== '.';
 }
 
 function buildFloor(size_w, size_h) {
-  return Array.from({length: size_h}, (_, idx) => (idx == 0 || idx == size_h-1) ? '#'.repeat(size_w) : '#' + '.'.repeat(size_w-2) + '#' );
+  function buildNorthRow() { return replaceAtIndex('#'.repeat(size_w), size_w/2, 'N'); }
+  function buildSouthRow() { return replaceAtIndex('#'.repeat(size_w), size_w/2, 'S'); }
+  function buildHalfwayRow() { return 'W' + '.'.repeat(size_w-2) + 'E'; }
+
+  function buildRow(idx) {
+    if (idx == 0) return buildNorthRow();
+    else if (idx == size_h-1) return buildSouthRow();
+    else return idx == size_h/2 ? buildHalfwayRow() : '#' + '.'.repeat(size_w-2) + '#';
+  }
+  return Array.from({length: size_h}, (_, idx) => buildRow(idx) );
 }
 
 function initialState() {
