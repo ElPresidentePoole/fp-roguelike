@@ -11,25 +11,19 @@ function merge(obj1, obj2) {
 }
 
 function isCollision(pos) {
-  return State.floor[pos.y][pos.x] !== '.'; // FIXME: off on the x axis?
+  return State.floor[pos.y][pos.x] !== '.';
 }
 
 function buildFloor(size_w, size_h) {
-  // TODO: return grid like initialState is atm but with a size as given
+  return Array.from({length: size_h}, (_, idx) => (idx == 0 || idx == size_h-1) ? '#'.repeat(size_w) : '#' + '.'.repeat(size_w-2) + '#' );
 }
 
 function initialState() {
   return ({
-    floor: ["#####N#####",
-            "#.........#",
-            "W.........E",
-            "#.........#",
-            "#.........#",
-            "#####S#####"],
-    player_pos: { x: 4, y: 4 },
+    floor: buildFloor(18, 18),
+    player_pos: { x: 1, y: 1 },
   });
 }
-
 
 function handleAction(action) {
   let player_final_position = { x: State.player_pos.x, y: State.player_pos.y };
