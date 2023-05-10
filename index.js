@@ -1,5 +1,6 @@
 import * as readline from 'node:readline';
 // import chalk from 'chalk'; // TODO: chalk
+import randomFloat from './random.js';
 import process from 'node:process';
 
 function merge(obj1, obj2) {
@@ -36,13 +37,19 @@ function buildFloor(size_w, size_h) {
   return Array.from({length: size_h}, (_, idx) => buildRow(idx) );
 }
 
+function randomFreePosition(state) {
+  // const free_positions = state.floor.forEach
+  return { x: Math.floor(randomFloat(state.rngi++) * state.floor[0].length), y: Math.floor(randomFloat(state.rngi++) * state.floor.length) };
+}
+
 function initialState() {
   return ({
     floor: buildFloor(18, 18),
-    player_pos: { x: 1, y: 1 },
+    player_pos: { x: 9, y: 9 },
     goblins_pos: [], // TODO: come back to these gobbos when we got gold!
     gold_pos: {x: 8, y: 8},
     gold_collected: 0,
+    rngi: 0, // rng iterator
   });
 }
 
@@ -58,7 +65,7 @@ function handleAction(state, action) {
     return state;
   } else {
     if (isGold(state, player_final_position)) {
-      return merge(state, { gold_collected: state.gold_collected+1, player_pos: player_final_position, gold_pos: { x: 1, y: 1 }}); // TODO: randomize pos
+      return merge(state, { gold_collected: state.gold_collected+1, player_pos: player_final_position, gold_pos: randomFreePosition(state) } ); // TODO: randomize pos
     } else {
       return merge(state, { player_pos: player_final_position });
     }
