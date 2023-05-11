@@ -1,5 +1,5 @@
 import * as readline from 'node:readline';
-// import chalk from 'chalk'; // TODO: chalk
+import chalk from 'chalk';
 import randomFloat from './random.js';
 import process from 'node:process';
 
@@ -8,6 +8,10 @@ function merge(obj1, obj2) {
   // idk how to explain this too good
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
   return Object.assign({}, obj1, obj2);
+}
+
+function pythonicRange(upper) {
+  return Array.from({length: upper}, (_, idx) => idx);
 }
 
 function replaceAtIndex(s, idx, r) {
@@ -40,7 +44,6 @@ function buildFloor(size_w, size_h) {
 
 function randomFreePosition(state) {
   // TODO: make an Array of all possible x and y values, minus the ones occupied by the player (or gobbos!)
-  // TODO: return state so we can keep track of our "current" rngi (state should not be muted but ykwim)
   let final_rngi = state.rngi;
   const rf1 = randomFloat(final_rngi)
   final_rngi = rf1.rngi;
@@ -54,8 +57,8 @@ function initialState() {
   return ({
     floor: buildFloor(18, 18),
     player_pos: { x: 9, y: 9 },
-    goblins_pos: [], // TODO: come back to these gobbos when we got gold!
-    gold_pos: {x: 8, y: 8},
+    // goblins_pos: [], // TODO: come back to these gobbos when we got gold!
+    gold_pos: { x: 8, y: 8 },
     gold_collected: 0,
     rngi: 0, // rng index
   });
@@ -81,20 +84,20 @@ function handleAction(state, action) {
   }
 }
 
-function goblinsRunTowardsPlayer(state) {
-  const goblins_new_pos = state.goblins_pos.map((pos) => {
-    if (state.player_pos.x < pos.x) return { x: pos.x-1, y: pos.y };
-    else if (state.player_pos.x > pos.x) return { x: pos.x+1, y: pos.y };
-    else if (state.player_pos.y < pos.y) return { x: pos.x, y: pos.y-1 };
-    else if (state.player_pos.y > pos.y) return { x: pos.x, y: pos.y+1 };
-  });
+// function goblinsRunTowardsPlayer(state) {
+//   const goblins_new_pos = state.goblins_pos.map((pos) => {
+//     if (state.player_pos.x < pos.x) return { x: pos.x-1, y: pos.y };
+//     else if (state.player_pos.x > pos.x) return { x: pos.x+1, y: pos.y };
+//     else if (state.player_pos.y < pos.y) return { x: pos.x, y: pos.y-1 };
+//     else if (state.player_pos.y > pos.y) return { x: pos.x, y: pos.y+1 };
+//   });
 
-  return merge(state, { goblins_pos: goblins_new_pos });
-}
+//   return merge(state, { goblins_pos: goblins_new_pos });
+// }
 
 function turn(state, player_input) {
   state = handleAction(state, player_input); // TODO: invalid moves shouldn't skip turns, maybe add a callback on_valid_move?
-  state = goblinsRunTowardsPlayer(state);
+  // state = goblinsRunTowardsPlayer(state);
   show(state);
   return state;
 }
@@ -109,9 +112,9 @@ function show(state) {
     if (idx == state.player_pos.y) row_buffer = replaceAtIndex(row_buffer, state.player_pos.x, '@');
     console.log(row_buffer);
   });
-  console.log(`You are at ${state.player_pos.x}, ${state.player_pos.y}`);
-  console.log(`Gold: ${state.gold_collected}`); // why does this print fine but the others are [object Object]?
-  console.log(`Gold is at: ${state.gold_pos.x}, ${state.gold_pos.y}`);
+  console.log(chalk.green(`You are at ${state.player_pos.x}, ${state.player_pos.y}`));
+  console.log(chalk.yellow(`Gold: ${state.gold_collected}`));
+  console.log(chalk.red(`Gold is at: ${state.gold_pos.x}, ${state.gold_pos.y}`)); // why does this print fine but the others are [object Object]?
 }
 
 function main() {
