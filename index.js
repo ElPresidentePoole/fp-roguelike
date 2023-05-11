@@ -21,6 +21,7 @@ function isCollision(state, pos) {
 function isGold(state, pos) {
   // Objects with the same fields and the same values aren't "equal" in JS, either with strict or loose equality (==/===)
   // To work around this, I convert our objects to a JSON string and check if those are equal.
+  // console.log(`${JSON.stringify(pos)} === ${JSON.stringify(state.gold_pos)}`);
   return JSON.stringify(pos) === JSON.stringify(state.gold_pos);
 }
 
@@ -46,7 +47,7 @@ function randomFreePosition(state) {
   const rf2 = randomFloat(final_rngi)
   final_rngi = rf2.rngi;
   const final_state = merge(state, { rngi: final_rngi });
-  return { state: final_state, pos: { x: 1+Math.floor(rf1.value * (state.floor[0].length-2)), y: 1+Math.floor(randomFloat(rf2.value) * (state.floor.length-2)) } };
+  return { state: final_state, pos: { x: 1+Math.floor(rf1.value * (state.floor[0].length-2)), y: 1+Math.floor(rf2.value * (state.floor.length-2)) } };
 }
 
 function initialState() {
@@ -99,7 +100,7 @@ function turn(state, player_input) {
 }
 
 function show(state) {
-  console.clear();
+  // console.clear();
   state.floor.forEach((row, idx) => {
     let row_buffer = row + '';
     const goblins_on_this_row = state.goblins_pos.filter((pos) => pos.y == idx);
@@ -109,8 +110,8 @@ function show(state) {
     console.log(row_buffer);
   });
   console.log(`You are at ${state.player_pos.x}, ${state.player_pos.y}`);
-  console.log(`Gold: ${state.gold_collected}`);
-  console.log(`Gold is at: ${state.gold_pos.x}, ${state.gold_pos.x}`); // FIXME: where did the gold go?  it's not at 15,15!
+  console.log(`Gold: ${state.gold_collected}`); // why does this print fine but the others are [object Object]?
+  console.log(`Gold is at: ${state.gold_pos.x}, ${state.gold_pos.y}`);
 }
 
 function main() {
