@@ -39,8 +39,14 @@ function buildFloor(size_w, size_h) {
 
 function randomFreePosition(state) {
   // TODO: make an Array of all possible x and y values, minus the ones occupied by the player (or gobbos!)
-  // FIXME: this modifies state, which is a big no-no!
-  return { x: 1+Math.floor(randomFloat(state.rngi++) * (state.floor[0].length-2)), y: 1+Math.floor(randomFloat(state.rngi++) * (state.floor.length-2)) };
+  // TODO: return state so we can keep track of our "current" rngi (state should not be muted but ykwim)
+  let final_rngi = state.rngi;
+  const rf1 = randomFloat(final_rngi)
+  final_rngi = rf1.rngi;
+  const rf2 = randomFloat(final_rngi)
+  final_rngi = rf2.rngi;
+  const final_state = merge(state, { rngi: final_rngi });
+  return { state: final_state, pos: { x: 1+Math.floor(rf1.value * (state.floor[0].length-2)), y: 1+Math.floor(randomFloat(rf2.value) * (state.floor.length-2)) } };
 }
 
 function initialState() {
@@ -50,7 +56,7 @@ function initialState() {
     goblins_pos: [], // TODO: come back to these gobbos when we got gold!
     gold_pos: {x: 8, y: 8},
     gold_collected: 0,
-    rngi: 0, // rng iterator
+    rngi: 0, // rng index
   });
 }
 
@@ -66,7 +72,8 @@ function handleAction(state, action) {
     return state;
   } else {
     if (isGold(state, player_final_position)) {
-      return merge(state, { gold_collected: state.gold_collected+1, player_pos: player_final_position, gold_pos: randomFreePosition(state) } ); // TODO: randomize pos
+      const { state: new_state, pos: free_pos } = randomFreePosition(state);
+      return merge(state, { gold_collected: state.gold_collected+1, player_pos: player_final_position, gold_pos: free_pos, rngi: new_state.rngi } );
     } else {
       return merge(state, { player_pos: player_final_position });
     }
@@ -101,8 +108,9 @@ function show(state) {
     if (idx == state.player_pos.y) row_buffer = replaceAtIndex(row_buffer, state.player_pos.x, '@');
     console.log(row_buffer);
   });
-  console.log(state.player_pos);
+  console.log(`You are at ${state.player_pos.x}, ${state.player_pos.y}`);
   console.log(`Gold: ${state.gold_collected}`);
+  console.log(`Gold is at: ${state.gold_pos.x}, ${state.gold_pos.x}`); // FIXME: where did the gold go?  it's not at 15,15!
 }
 
 function main() {
